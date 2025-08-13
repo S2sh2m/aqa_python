@@ -68,7 +68,7 @@ print(evening)
 Скількі сьогодні дітей у театральному гуртку?
 """
 boys = 24
-girls = 24/2
+girls = boys/2
 boys_today = boys - 1
 girls_today = girls -2
 total_kids = boys_today+girls_today
