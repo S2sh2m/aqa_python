@@ -1,6 +1,9 @@
-total = 0
-for number in range(1, 1000):
-    if number % 2 == 0:
-        total += number
+lst1 = ['1', '2', 3, True, 'False', 5, '6', 7, 8, 'Python', 9, 0, 'Lorem Ipsum']
 
-print("Sum of numbers:", total)
+lst2 = []
+
+for item in lst1:
+    if type(item) == str:
+        lst2.append(item)
+
+print(lst2)
