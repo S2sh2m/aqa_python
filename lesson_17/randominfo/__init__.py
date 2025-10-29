@@ -258,20 +258,25 @@ def get_birthdate(startAge = None, endAge = None, _format = "%d %b, %Y"):
 	return datetime.fromtimestamp(randrange(int(endTs), int(startTs))).strftime(_format)
 
 def get_address():
-	full_addr = []
-	addrParam = ['street', 'landmark', 'area', 'city', 'state', 'country', 'pincode']
-	for i in range(5,12):
-		addrFile = csv.reader(open(full_path('data.csv'), 'r'))
-		allAddrs = []
-		for addr in addrFile:
-			try:
-				if addr[i] != '':
-					allAddrs.append(addr[i])
-			except:
-				pass
-		full_addr.append(choice(allAddrs))
-	full_addr = dict(zip(addrParam, full_addr))
-	return full_addr
+    full_addr = []
+    addrParam = ['street', 'landmark', 'area', 'city', 'state', 'country', 'pincode']
+    for i in range(5,12):
+        addrFile = csv.reader(open(full_path('data.csv'), 'r'))
+        allAddrs = []
+        for addr in addrFile:
+            try:
+                if addr[i] != '':
+                    allAddrs.append(addr[i])
+            except:
+                pass
+        if allAddrs:
+            full_addr.append(choice(allAddrs))
+        else:
+            full_addr.append('')
+    full_addr = dict(zip(addrParam, full_addr))
+    return full_addr
+
+
 
 def get_hobbies():
 	hobbiesFile = csv.reader(open(full_path('data.csv'), 'r'))
