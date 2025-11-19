@@ -1,0 +1,68 @@
+pipeline {
+    agent any
+
+    environment {
+        PYTHON = "python3"
+        VENV_DIR = ".venv"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo "Клонуємо репозиторій"
+                git branch: 'homework_29', url: 'https://github.com/S2sh2m/aqa_python.git'
+            }
+        }
+
+        stage('Install dependencies') {
+            steps {
+                echo "Ставимо залежності"
+                sh '''
+                    if [ ! -d $VENV_DIR ]; then
+                        $PYTHON -m venv $VENV_DIR
+                    fi
+                    source $VENV_DIR/bin/activate
+                    pip install --upgrade pip
+                    pip install -r lesson_29/requirements.txt
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                echo "Запуск pytest"
+                sh '''
+                    source $VENV_DIR/bin/activate
+                    pytest lesson_29/tests --alluredir=lesson_29/allure-results
+                '''
+            }
+        }
+
+        stage('Allure Report') {
+            steps {
+                echo "Публікація Allure"
+            }
+            post {
+                always {
+                    allure([
+                        includeProperties: false,
+                        jdk: '',
+                        results: [[path: 'lesson_29/allure-results']]
+                    ])
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Email"
+            emailext(
+                subject: "Результати тестів Jenkins",
+                body: "Результати тестів доступні у Allure",
+                to: "songwriterm77@icloud.com"
+            )
+        }
+    }
+}
