@@ -4,7 +4,7 @@ pipeline {
     environment {
         PYTHONPATH = "${WORKSPACE}"
         DB_HOST     = "localhost"
-        DB_PORT     = "5433"
+        DB_PORT     = "5432"
         DB_NAME     = "testdb"
         DB_USER     = "testuser"
         DB_PASSWORD = "testpassword"
@@ -21,26 +21,24 @@ pipeline {
 
         stage('Start PostgreSQL') {
             steps {
-                echo "Старт PostgreSQL"
+                echo "Старт PostgreSQL (host network)"
                 sh '''
                     docker rm -f pg_test || true
 
-                    docker run -d --name pg_test \
+                    docker run -d --network=host --name pg_test \
                         -e POSTGRES_USER=${DB_USER} \
                         -e POSTGRES_PASSWORD=${DB_PASSWORD} \
                         -e POSTGRES_DB=${DB_NAME} \
-                        -p ${DB_PORT}:5432 \
                         postgres:15
 
-                    echo "Запуск PostgreSQL..."
-                    sleep 10
+                    echo "Запуск PostgreSQL"
+                    sleep 5
                 '''
             }
         }
 
         stage('Install Python') {
             steps {
-                echo "Install Python"
                 sh '''
                     apt-get update
                     apt-get install -y python3 python3-pip python3-venv
@@ -50,11 +48,9 @@ pipeline {
 
         stage('Install deps') {
             steps {
-                echo "Install dependencies"
                 sh '''
                     python3 -m venv .venv
                     . .venv/bin/activate
-                    pip install --upgrade pip
                     pip install -r lesson_29/requirements.txt
                 '''
             }
@@ -62,7 +58,6 @@ pipeline {
 
         stage('Run tests') {
             steps {
-                echo "Run pytest"
                 sh '''
                     export PYTHONPATH=$PWD
                     . .venv/bin/activate
@@ -73,13 +68,11 @@ pipeline {
 
         stage('Allure') {
             steps {
-                echo "Generate Allure"
+                echo "Allure "
             }
             post {
                 always {
                     allure([
-                        includeProperties: false,
-                        jdk: '',
                         results: [[path: 'allure-results']]
                     ])
                 }
@@ -89,14 +82,8 @@ pipeline {
 
     post {
         always {
-            echo "Stop PostgreSQL"
+            echo "Стоп PostgreSQL"
             sh 'docker rm -f pg_test || true'
-
-            emailext(
-                subject: "Pipeline статус",
-                body: "Тести виконано",
-                to: "songwriterm77@icloud.com"
-            )
         }
     }
 }

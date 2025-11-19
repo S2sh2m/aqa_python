@@ -6,7 +6,8 @@ DB_NAME = os.getenv("DB_NAME", "testdb")
 DB_USER = os.getenv("DB_USER", "testuser")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "testpassword")
 DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5433")
+DB_PORT = os.getenv("DB_PORT", "5432")  # стандартний порт
+
 
 def get_connection():
     return psycopg2.connect(
@@ -22,15 +23,13 @@ def get_connection():
 def init_db():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        """
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS test_results (
             id SERIAL PRIMARY KEY,
             username VARCHAR(100) NOT NULL,
             score INTEGER NOT NULL
         );
-        """
-    )
+    """)
     conn.commit()
     cur.close()
     conn.close()
@@ -53,10 +52,8 @@ def insert_result(username: str, score: int) -> int:
 def update_result(result_id: int, new_score: int) -> None:
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        "UPDATE test_results SET score = %s WHERE id = %s;",
-        (new_score, result_id),
-    )
+    cur.execute("UPDATE test_results SET score = %s WHERE id = %s;",
+                (new_score, result_id))
     conn.commit()
     cur.close()
     conn.close()
