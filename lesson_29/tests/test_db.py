@@ -1,5 +1,5 @@
 import psycopg2
-from db import (
+from lesson_29.db import (
     get_connection,
     init_db,
     insert_result,
