@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.12'
+            args '-u root'
+        }
+    }
 
     environment {
         PYTHON = "python3"
@@ -11,7 +16,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "Клонуємо репозиторій"
-                git branch: 'homework_29', url: 'https://github.com/S2sh2m/aqa_python.git'
+                checkout scm
             }
         }
 
@@ -19,10 +24,7 @@ pipeline {
             steps {
                 echo "Ставимо залежності"
                 sh '''
-                    if [ ! -d $VENV_DIR ]; then
-                        $PYTHON -m venv $VENV_DIR
-                    fi
-                    source $VENV_DIR/bin/activate
+                    python3 --version
                     pip install --upgrade pip
                     pip install -r lesson_29/requirements.txt
                 '''
@@ -31,24 +33,23 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                echo "Запуск pytest"
+                echo "Прогон тестів"
                 sh '''
-                    source $VENV_DIR/bin/activate
-                    pytest lesson_29/tests --alluredir=lesson_29/allure-results
+                    pytest lesson_29/tests --alluredir=allure-results
                 '''
             }
         }
 
         stage('Allure Report') {
             steps {
-                echo "Публікація Allure"
+                echo "Генеруємо Allure"
             }
             post {
                 always {
                     allure([
                         includeProperties: false,
                         jdk: '',
-                        results: [[path: 'lesson_29/allure-results']]
+                        results: [[path: 'allure-results']]
                     ])
                 }
             }
@@ -59,8 +60,8 @@ pipeline {
         always {
             echo "Email"
             emailext(
-                subject: "Результати тестів Jenkins",
-                body: "Результати тестів доступні у Allure",
+                subject: "Відправляю собі ж на пошту",
+                body: "Доне, чек резалти",
                 to: "songwriterm77@icloud.com"
             )
         }
