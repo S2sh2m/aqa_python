@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        PYTHON = "python3"
+        VENV_DIR = ".venv"
+        PYTHONPATH = "${WORKSPACE}/lesson_29"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -12,7 +18,7 @@ pipeline {
 
         stage('Install Python') {
             steps {
-                echo " Python"
+                echo "Встановлюємо Python"
                 sh '''
                     apt-get update
                     apt-get install -y python3 python3-pip python3-venv
@@ -22,10 +28,10 @@ pipeline {
 
         stage('Install deps') {
             steps {
-                echo " requirements"
+                echo "Ставимо залежності"
                 sh '''
-                    python3 -m venv .venv
-                    . .venv/bin/activate
+                    ${PYTHON} -m venv ${VENV_DIR}
+                    . ${VENV_DIR}/bin/activate
                     pip install --upgrade pip
                     pip install -r lesson_29/requirements.txt
                 '''
@@ -36,7 +42,7 @@ pipeline {
             steps {
                 echo "Запускаємо pytest"
                 sh '''
-                    . .venv/bin/activate
+                    . ${VENV_DIR}/bin/activate
                     pytest lesson_29/tests --alluredir=allure-results
                 '''
             }
@@ -44,7 +50,7 @@ pipeline {
 
         stage('Allure report') {
             steps {
-                echo "репорт Allure"
+                echo "Генеруємо Allure звіт"
             }
             post {
                 always {
@@ -62,7 +68,7 @@ pipeline {
         always {
             emailext(
                 subject: "Pipeline статус",
-                body: "Allure ",
+                body: "Allure звіт виконання пайплайну дивись у Jenkins.",
                 to: "songwriterm77@icloud.com"
             )
         }
