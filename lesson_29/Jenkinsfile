@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    environment {
+        DB_HOST = "pg_test"
+        DB_NAME = "testdb"
+        DB_USER = "testuser"
+        DB_PASSWORD = "testpassword"
+        DB_PORT = "5432"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -12,18 +20,17 @@ pipeline {
 
         stage('Start PostgreSQL') {
             steps {
-                echo " PostgreSQL контейнер"
+                echo " PostgreSQL "
                 sh '''
                     docker rm -f pg_test || true
 
                     docker run -d --name pg_test \
-                        -e POSTGRES_USER=testuser \
-                        -e POSTGRES_PASSWORD=testpassword \
-                        -e POSTGRES_DB=testdb \
-                        -p 5432:5432 \
+                        -e POSTGRES_USER=$DB_USER \
+                        -e POSTGRES_PASSWORD=$DB_PASSWORD \
+                        -e POSTGRES_DB=$DB_NAME \
                         postgres:15
 
-                    echo "сліп щоб підняти "
+                    echo "Чекаємо запуск PostgreSQL..."
                     sleep 10
                 '''
             }
@@ -41,7 +48,7 @@ pipeline {
 
         stage('Install deps') {
             steps {
-                echo " Всякі депенденсі"
+                echo " залежності"
                 sh '''
                     python3 -m venv .venv
                     . .venv/bin/activate
@@ -79,7 +86,7 @@ pipeline {
 
     post {
         always {
-            echo "Очищення PostgreSQL "
+            echo "Видаляємо PostgreSQL "
             sh 'docker rm -f pg_test || true'
 
             emailext(
