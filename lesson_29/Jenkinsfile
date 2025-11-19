@@ -1,20 +1,25 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.12'
+            args '-u root --privileged -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo "Клон репо"
+                echo "Клонуємо репозиторій"
                 checkout scm
             }
         }
 
-        stage('Start PostgreSQL') {
+        stage('Start PostgreSQL (Docker)') {
             steps {
-                echo "Стартуємо PostgreSQL контейнер"
                 sh '''
-                    # Зупиняємо контейнер, якщо вже був
+                    echo ">>>> Стартуємо PostgreSQL через Docker"
+
                     docker rm -f pg_test || true
 
                     docker run -d --name pg_test \
@@ -24,28 +29,20 @@ pipeline {
                         -p 5432:5432 \
                         postgres:15
 
-                    echo "Чекаємо, поки PostgreSQL підніметься..."
+                    echo ">>>> Чекаємо 10 секунд"
                     sleep 10
-                '''
-            }
-        }
-
-        stage('Install Python') {
-            steps {
-                echo "Встановлюємо Python"
-                sh '''
-                    apt-get update
-                    apt-get install -y python3 python3-pip python3-venv
                 '''
             }
         }
 
         stage('Install deps') {
             steps {
-                echo "Ставимо залежності"
                 sh '''
-                    python3 -m venv .venv
+                    echo ">>>> Інсталюємо залежності"
+
+                    python -m venv .venv
                     . .venv/bin/activate
+
                     pip install --upgrade pip
                     pip install -r lesson_29/requirements.txt
                 '''
@@ -54,8 +51,9 @@ pipeline {
 
         stage('Run tests') {
             steps {
-                echo "Запускаємо pytest"
                 sh '''
+                    echo ">>>> Запускаємо pytest"
+
                     . .venv/bin/activate
                     pytest lesson_29/tests --alluredir=allure-results
                 '''
@@ -80,12 +78,11 @@ pipeline {
 
     post {
         always {
-            echo "Очищення: вбиваємо PostgreSQL"
             sh 'docker rm -f pg_test || true'
 
             emailext(
                 subject: "Pipeline статус",
-                body: "Тести виконано",
+                body: "Тести виконано успішно",
                 to: "songwriterm77@icloud.com"
             )
         }
