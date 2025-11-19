@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         PYTHONPATH = "${WORKSPACE}"
-        DB_HOST     = "pg_test"     // внутрішній hostname контейнера PostgreSQL
-        DB_PORT     = "5432"        // внутрішній порт контейнера
+        DB_HOST     = "localhost"
+        DB_PORT     = "5433"
         DB_NAME     = "testdb"
         DB_USER     = "testuser"
         DB_PASSWORD = "testpassword"
@@ -29,6 +29,7 @@ pipeline {
                         -e POSTGRES_USER=${DB_USER} \
                         -e POSTGRES_PASSWORD=${DB_PASSWORD} \
                         -e POSTGRES_DB=${DB_NAME} \
+                        -p ${DB_PORT}:5432 \
                         postgres:15
 
                     echo "Запуск PostgreSQL..."
@@ -92,7 +93,7 @@ pipeline {
             sh 'docker rm -f pg_test || true'
 
             emailext(
-                subject: "Pipeline ",
+                subject: "Pipeline статус",
                 body: "Тести виконано",
                 to: "songwriterm77@icloud.com"
             )

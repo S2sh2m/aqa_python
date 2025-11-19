@@ -5,9 +5,8 @@ from psycopg2.extras import RealDictCursor
 DB_NAME = os.getenv("DB_NAME", "testdb")
 DB_USER = os.getenv("DB_USER", "testuser")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "testpassword")
-DB_HOST = os.getenv("DB_HOST", "pg_test")
-DB_PORT = os.getenv("DB_PORT", "5432")
-
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5433")
 
 def get_connection():
     return psycopg2.connect(
