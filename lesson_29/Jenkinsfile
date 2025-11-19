@@ -1,53 +1,35 @@
 pipeline {
     agent any
 
-    environment {
-        PYTHON = "python3"
-        VENV_DIR = ".venv"
-    }
-
     stages {
 
         stage('Checkout') {
             steps {
-                echo "Клон репо"
+                echo "Клонимо"
                 checkout scm
             }
         }
 
-        stage('Install Python & deps') {
+        stage('Run in Docker') {
             steps {
-                echo "Інсталимось"
+                echo " тести докер"
 
                 sh '''
-                    apt-get update
-                    apt-get install -y python3 python3-venv python3-pip
-
-                    if [ ! -d $VENV_DIR ]; then
-                        python3 -m venv $VENV_DIR
-                    fi
-
-                    source $VENV_DIR/bin/activate
-                    pip install --upgrade pip
-                    pip install -r lesson_29/requirements.txt
-                '''
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                echo "Тести"
-
-                sh '''
-                    source $VENV_DIR/bin/activate
-                    pytest lesson_29/tests --alluredir=allure-results
+                    docker run --rm \
+                        -v $PWD:/app \
+                        -w /app \
+                        python:3.12 bash -c "\
+                            pip install --upgrade pip && \
+                            pip install -r lesson_29/requirements.txt && \
+                            pytest lesson_29/tests --alluredir=allure-results \
+                        "
                 '''
             }
         }
 
         stage('Allure Report') {
             steps {
-                echo "Allure"
+                echo " Allure"
             }
             post {
                 always {
@@ -64,8 +46,8 @@ pipeline {
     post {
         always {
             emailext(
-                subject: "Результати ",
-                body: "Чекни резалти",
+                subject: "Резалти",
+                body: "Pipeline завершено. Перевір Allure.",
                 to: "songwriterm77@icloud.com"
             )
         }
