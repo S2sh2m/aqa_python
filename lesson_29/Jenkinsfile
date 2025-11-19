@@ -1,29 +1,50 @@
 pipeline {
-    agent none
+    agent any
 
     stages {
 
         stage('Checkout') {
-            agent any
             steps {
                 echo "Клон репо"
                 checkout scm
             }
         }
 
-        stage('Run tests in Python Docker') {
-            agent {
-                docker {
-                    image 'python:3.12'
-                }
-            }
+        stage('Install Python') {
             steps {
-                echo "Запускаємо тести"
+                echo " Python"
                 sh '''
+                    apt-get update
+                    apt-get install -y python3 python3-pip python3-venv
+                '''
+            }
+        }
+
+        stage('Install deps') {
+            steps {
+                echo " requirements"
+                sh '''
+                    python3 -m venv .venv
+                    . .venv/bin/activate
                     pip install --upgrade pip
                     pip install -r lesson_29/requirements.txt
+                '''
+            }
+        }
+
+        stage('Run tests') {
+            steps {
+                echo "Запускаємо pytest"
+                sh '''
+                    . .venv/bin/activate
                     pytest lesson_29/tests --alluredir=allure-results
                 '''
+            }
+        }
+
+        stage('Allure report') {
+            steps {
+                echo "репорт Allure"
             }
             post {
                 always {
@@ -40,8 +61,8 @@ pipeline {
     post {
         always {
             emailext(
-                subject: "Pipeline Complete",
-                body: "Allure.",
+                subject: "Pipeline статус",
+                body: "Allure ",
                 to: "songwriterm77@icloud.com"
             )
         }
