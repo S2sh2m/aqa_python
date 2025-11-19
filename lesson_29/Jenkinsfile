@@ -1,37 +1,48 @@
 pipeline {
-    agent any
-
-    environment {
-        PYTHON = "python3"
-        VENV_DIR = ".venv"
-        PYTHONPATH = "${WORKSPACE}/lesson_29"
+    agent {
+        docker {
+            image 'python:3.12'
+            args '-u root --privileged -v /var/run/docker.sock:/var/run/docker.sock'
+        }
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo "Клон репо"
+                echo "Клонуємо репозиторій"
                 checkout scm
             }
         }
 
-        stage('Install Python') {
+        stage('Start PostgreSQL (Docker)') {
             steps {
-                echo "Встановлюємо Python"
                 sh '''
-                    apt-get update
-                    apt-get install -y python3 python3-pip python3-venv
+                    echo ">>>> Стартуємо PostgreSQL через Docker"
+
+                    docker rm -f pg_test || true
+
+                    docker run -d --name pg_test \
+                        -e POSTGRES_USER=testuser \
+                        -e POSTGRES_PASSWORD=testpassword \
+                        -e POSTGRES_DB=testdb \
+                        -p 5432:5432 \
+                        postgres:15
+
+                    echo ">>>> Чекаємо 10 секунд"
+                    sleep 10
                 '''
             }
         }
 
         stage('Install deps') {
             steps {
-                echo "Ставимо залежності"
                 sh '''
-                    ${PYTHON} -m venv ${VENV_DIR}
-                    . ${VENV_DIR}/bin/activate
+                    echo ">>>> Інсталюємо залежності"
+
+                    python -m venv .venv
+                    . .venv/bin/activate
+
                     pip install --upgrade pip
                     pip install -r lesson_29/requirements.txt
                 '''
@@ -40,9 +51,10 @@ pipeline {
 
         stage('Run tests') {
             steps {
-                echo "Запускаємо pytest"
                 sh '''
-                    . ${VENV_DIR}/bin/activate
+                    echo ">>>> Запускаємо pytest"
+
+                    . .venv/bin/activate
                     pytest lesson_29/tests --alluredir=allure-results
                 '''
             }
@@ -50,7 +62,7 @@ pipeline {
 
         stage('Allure report') {
             steps {
-                echo "Генеруємо Allure звіт"
+                echo "Генеруємо Allure"
             }
             post {
                 always {
@@ -66,9 +78,11 @@ pipeline {
 
     post {
         always {
+            sh 'docker rm -f pg_test || true'
+
             emailext(
                 subject: "Pipeline статус",
-                body: "Allure звіт виконання пайплайну дивись у Jenkins.",
+                body: "Тести виконано успішно",
                 to: "songwriterm77@icloud.com"
             )
         }
