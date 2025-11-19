@@ -1,6 +1,6 @@
 import psycopg2
 import allure
-from db import (
+from lesson_29.db import (
     get_connection,
     init_db,
     insert_result,
@@ -8,6 +8,7 @@ from db import (
     delete_result,
     get_result,
 )
+
 
 
 @allure.feature("DB Connection")
