@@ -2,12 +2,11 @@ pipeline {
     agent any
 
     environment {
-        DB_HOST = "localhost"
-        DB_NAME = "testdb"
-        DB_USER = "testuser"
+        DB_HOST     = "host.docker.internal"
+        DB_PORT     = "5433"
+        DB_NAME     = "testdb"
+        DB_USER     = "testuser"
         DB_PASSWORD = "testpassword"
-        DB_PORT = "5432"
-        PYTHONPATH = "./lesson_29"
     }
 
     stages {
@@ -21,17 +20,18 @@ pipeline {
 
         stage('Start PostgreSQL') {
             steps {
-                echo " PostgreSQL "
+                echo "Старт PostgreSQL "
                 sh '''
                     docker rm -f pg_test || true
 
                     docker run -d --name pg_test \
-                        -e POSTGRES_USER=$DB_USER \
-                        -e POSTGRES_PASSWORD=$DB_PASSWORD \
-                        -e POSTGRES_DB=$DB_NAME \
+                        -e POSTGRES_USER='${DB_USER}' \
+                        -e POSTGRES_PASSWORD='${DB_PASSWORD}' \
+                        -e POSTGRES_DB='${DB_NAME}' \
+                        -p ${DB_PORT}:5432 \
                         postgres:15
 
-                    echo "Чекаємо запуск PostgreSQL..."
+                    echo "Запуск PostgreSQL..."
                     sleep 10
                 '''
             }
@@ -49,7 +49,7 @@ pipeline {
 
         stage('Install deps') {
             steps {
-                echo " залежності"
+                echo "Залежності"
                 sh '''
                     python3 -m venv .venv
                     . .venv/bin/activate
@@ -69,7 +69,7 @@ pipeline {
             }
         }
 
-        stage('Allure report') {
+        stage('Allure ') {
             steps {
                 echo " Allure"
             }
@@ -87,12 +87,12 @@ pipeline {
 
     post {
         always {
-            echo "Видаляємо PostgreSQL "
+            echo "Ремуваємо PostgreSQL "
             sh 'docker rm -f pg_test || true'
 
             emailext(
                 subject: "Pipeline статус",
-                body: "Тести виконано",
+                body: "Тести ",
                 to: "songwriterm77@icloud.com"
             )
         }
