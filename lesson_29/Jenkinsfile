@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DB_HOST = "pg_test"
+        DB_HOST = "localhost"
         DB_NAME = "testdb"
         DB_USER = "testuser"
         DB_PASSWORD = "testpassword"
