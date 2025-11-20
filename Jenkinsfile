@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PYTHONPATH = "${WORKSPACE}"
-        DB_HOST     = "localhost"
+        DB_HOST     = "host.docker.internal"
         DB_PORT     = "5439"
         DB_NAME     = "testdb"
         DB_USER     = "testuser"
@@ -21,7 +21,7 @@ pipeline {
 
         stage('Start PostgreSQL') {
             steps {
-                echo "PostgreSQL "
+                echo "PostgreSQL"
                 sh '''
                     docker rm -f pg_test || true
 
